@@ -16,6 +16,7 @@ python-multipart = "^0.0.5"
 uvicorn = "^0.18.2"
 itsdangerous = "^2.1.2"
 aiofiles = "^0.8.0"
+pipreqs = "^0.4.11"
 
 [tool.poetry.dev-dependencies]
 
