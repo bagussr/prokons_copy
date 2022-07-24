@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "prokons"
+version = "0.1.0"
+description = ""
+authors = ["bagus <bagusssyamsu@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.79.0"
+fastapi-jwt-auth = "^0.5.0"
+SQLAlchemy = "^1.4.39"
+mysqlclient = "^2.1.1"
+python-dotenv = "^0.20.0"
+bcrypt = "^3.2.2"
+python-multipart = "^0.0.5"
+uvicorn = "^0.18.2"
+itsdangerous = "^2.1.2"
+aiofiles = "^0.8.0"
+
+[tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+start = "prokons.app:start"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
