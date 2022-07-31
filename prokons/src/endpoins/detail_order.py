@@ -3,10 +3,11 @@ from datetime import datetime
 
 from src import Session, get_db, AuthJWT, AuthJWTException, JWTDecodeError, JSONResponse
 from src.handler.detail_order import get_log, get_log_by_id
+from src.handler.utils import check_authrize
 
-route = APIRouter(prefix="/log-order", tags=["log_order"])
+route = APIRouter(prefix="/log-order", tags=["log_order"], dependencies=[Depends(check_authrize)])
 
-
+# endpoint to get all log order
 @route.get("/")
 def get_detail_order(db: Session = Depends(get_db), auth: AuthJWT = Depends()):
     data: list = []
@@ -28,6 +29,7 @@ def get_detail_order(db: Session = Depends(get_db), auth: AuthJWT = Depends()):
         raise AuthJWTException
 
 
+# endpoint to get transaction by id
 @route.get("/{id}")
 def get_transaction(id: int, db: Session = Depends(get_db), auth: AuthJWT = Depends()):
     try:

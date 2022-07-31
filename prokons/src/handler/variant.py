@@ -2,11 +2,12 @@ from src.__init__ import Session
 from src.schemas.main import CreateVariant
 from src.model.main import Variant
 
-
+# function to create new variant
 async def create_new_variant(db: Session, item: CreateVariant):
     variant = Variant(
         product_id=item.product_id,
         color_id=item.color_id,
+        category=item.category,
         size=item.size,
         stock=item.stock,
         price=item.price,
@@ -18,16 +19,19 @@ async def create_new_variant(db: Session, item: CreateVariant):
     return variant
 
 
+# function to get all variant
 def get_all_variant(db: Session):
     variant = db.query(Variant).all()
     return variant
 
 
+# function to get variant by id
 def get_variant_by_id(db: Session, id: int):
     variant = db.query(Variant).filter(Variant.id == id).first()
     return variant
 
 
+# function to delete variant
 def delete_variant_by_id(db: Session, id: int):
     variant = db.query(Variant).filter(Variant.id == id).first()
     db.delete(variant)
@@ -35,6 +39,7 @@ def delete_variant_by_id(db: Session, id: int):
     return variant
 
 
+# function to update variant
 async def update_variant_by_id(db: Session, item: CreateVariant, id: int):
     variant = db.query(Variant).filter(Variant.id == id).first()
     if item.color_id:
@@ -45,11 +50,14 @@ async def update_variant_by_id(db: Session, item: CreateVariant, id: int):
         variant.price = item.price
     if item.stock:
         variant.stock = item.stock
+    if item.category:
+        variant.category = item.category
     db.commit()
     db.refresh(variant)
     return variant
 
 
+# function to trigger add order
 async def decrease_order(db: Session, id: int, qty: int):
     variant = get_variant_by_id(db, id)
     variant.stock = variant.stock - qty
@@ -57,6 +65,7 @@ async def decrease_order(db: Session, id: int, qty: int):
     db.refresh(variant)
 
 
+# fucntion to check variant
 def check_variant(db: Session, id: int):
     if get_variant_by_id(db, id):
         return True

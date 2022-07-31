@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from src.schemas.main import CreateVariant
 from src import get_db, JSONResponse
 from src.handler.variant import *
-from src.handler.utils import product_variant
+from src.handler.utils import product_variant, check_authrize
 
 
-route = APIRouter(prefix="/variant", tags=["variant"])
+route = APIRouter(prefix="/variant", tags=["variant"], dependencies=[Depends(check_authrize)])
 
-
+# endpoint to get all variant
 @route.get("/")
 def get_variant_all(db: Session = Depends(get_db)):
     variant = get_all_variant(db)
@@ -16,18 +16,20 @@ def get_variant_all(db: Session = Depends(get_db)):
         for x in variant:
             data.append(
                 {
-                    "id": x.id,
-                    "product_id": x.product_id,
-                    "color": x.color_id,
-                    "size": x.size,
-                    "price": x.price,
-                    "stock": x.stock,
+                    "Id": x.id,
+                    "Product_id": x.product_id,
+                    "Category": x.category,
+                    "Color": x.color_id,
+                    "Size": x.size,
+                    "Price": x.price,
+                    "Stock": x.stock,
                 }
             )
         return JSONResponse({"msg": "success", "data": data}, 200)
     raise HTTPException(404, {"msg": "not found"})
 
 
+# endpoint to get all product with the variant
 @route.get("/products")
 async def get_all_product_variant(db: Session = Depends(get_db)):
     products = await product_variant(db)
@@ -39,12 +41,14 @@ async def get_all_product_variant(db: Session = Depends(get_db)):
     raise HTTPException(404, {"msg": "not found"})
 
 
+# endpoint to create new variant
 @route.post("/")
 async def add_variant(item: CreateVariant, db: Session = Depends(get_db)):
     variant = await create_new_variant(db, item)
     data: dict = {
         "id": variant.id,
         "product_id": variant.product_id,
+        "category": variant.category,
         "color": variant.color_id,
         "size": variant.size,
         "price": variant.price,
@@ -53,6 +57,7 @@ async def add_variant(item: CreateVariant, db: Session = Depends(get_db)):
     return JSONResponse({"msg": "variant created", "data": data}, 201)
 
 
+# endpoint to delete variant
 @route.delete("/{id}")
 def delete_variant(id: int, db: Session = Depends(get_db)):
     _variant = get_variant_by_id(db, id)
@@ -62,6 +67,7 @@ def delete_variant(id: int, db: Session = Depends(get_db)):
     raise HTTPException(404, {"msg": "not found"})
 
 
+# endpoint to update variant
 @route.put("/{id}")
 async def updaet_variant(item: CreateVariant, id: int, db: Session = Depends(get_db)):
     _variant = get_variant_by_id(db, id)
@@ -70,6 +76,7 @@ async def updaet_variant(item: CreateVariant, id: int, db: Session = Depends(get
         data: dict = {
             "id": variant.id,
             "product_id": variant.product_id,
+            "category": variant.category,
             "color": variant.color_id,
             "size": variant.size,
             "price": variant.price,

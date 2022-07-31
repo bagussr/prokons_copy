@@ -5,6 +5,7 @@ from src.model.main import Order, Transaction
 from src.handler.variant import decrease_order
 
 
+# funtion to create new order
 async def create_order(db: Session, item: CraeteOrder):
     order = Order(
         transaction_id=item.transaction_id,
@@ -19,16 +20,19 @@ async def create_order(db: Session, item: CraeteOrder):
     return order
 
 
+# function to get order by id
 def get_order_by_id(db: Session, id: int):
     order = db.query(Order).filter(Order.id == id).first()
     return order
 
 
+# function to get all order
 def get_all_order(db: Session):
     order = db.query(Order).all()
     return order
 
 
+# function to create new transaction
 async def create_trasaction(db: Session, item: CreateTransaction):
     transaction = Transaction(user_id=item.user_id, status=item.status._value_, updated_at=item.updated_at)
     db.add(transaction)
@@ -37,6 +41,7 @@ async def create_trasaction(db: Session, item: CreateTransaction):
     return transaction
 
 
+# funtion to update transaction status
 async def update_transaction(db: Session, status: str, id: int):
     transaction = db.query(Transaction).filter(Transaction.id == id).first()
     transaction.status = status

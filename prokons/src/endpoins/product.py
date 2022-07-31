@@ -2,6 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, File, Form, HTTPException, UploadFile, Depends
 from src.schemas.main import CreateProduct
 from src.handler.product import create_new_product, get_all_product, get_product_by_id, delete_product, update_product
+from src.handler.utils import check_authrize
 from src.__init__ import Session, get_db, JSONResponse
 from pathlib import Path
 from aiofiles import open
@@ -11,11 +12,11 @@ x = Path("prokons/public/image").absolute()
 y = Path("prokons").absolute()
 
 
-route = APIRouter(prefix="/product", tags=["product"])
+route = APIRouter(prefix="/product", tags=["product"], dependencies=[Depends(check_authrize)])
 
-
+# endpoint to create new product
 @route.post("/")
-async def add_product(name=Form(...), file: UploadFile = File(), db: Session = Depends(get_db)):
+async def add_product(name: str = Form(...), file: UploadFile = File(), db: Session = Depends(get_db)):
     try:
         async with open(os.path.join(x, file.filename), "wb") as r:
             content = await file.read()
@@ -27,6 +28,7 @@ async def add_product(name=Form(...), file: UploadFile = File(), db: Session = D
     return JSONResponse({"msg": "update success", "data": data}, 201)
 
 
+# endpoint to get all product
 @route.get("/")
 def get_product(db: Session = Depends(get_db)):
     product = get_all_product(db)
@@ -39,6 +41,7 @@ def get_product(db: Session = Depends(get_db)):
     raise HTTPException(404, detail={"msg": "not found"})
 
 
+# endpoint to delete product
 @route.delete("/{id}")
 def delete_product_id(id: int, db: Session = Depends(get_db)):
     _product = get_product_by_id(db, id)
@@ -51,6 +54,7 @@ def delete_product_id(id: int, db: Session = Depends(get_db)):
     raise HTTPException(404, detail={"msg": "not found"})
 
 
+# endpoint to update product
 @route.put("/{id}")
 async def update_product_id(
     id: int, name=Body(), file: Optional[UploadFile] = File(None), db: Session = Depends(get_db)

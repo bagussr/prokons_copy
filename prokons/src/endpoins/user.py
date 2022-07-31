@@ -3,23 +3,34 @@ from fastapi import APIRouter, Depends, HTTPException, status, Body
 from src.schemas.main import CreateUser
 from src.__init__ import Session, get_db, JSONResponse, AuthJWT, DecodeError
 from src.handler.user import create_user, get_user_by_username, delete_user, update_user, all_user, get_user_by_id
-from src.handler.utils import check_password
+from src.handler.utils import check_password, check_authrize
 
 route = APIRouter(prefix="/user", tags=["user"])
 
+# define variable for denylist for development or use redist for production
+denylist: set = set()
 
-@route.get("/")
+# revoke access token
+@AuthJWT.token_in_denylist_loader
+def check_if_token_in_denylist(decrypted_token):
+    jti = decrypted_token["jti"]
+    return jti in denylist
+
+
+# endpoint to get all user
+@route.get("/", dependencies=[Depends(check_authrize)])
 def get_user(db: Session = Depends(get_db)):
     user = all_user(db)
     if user:
         data: list = []
         for x in user:
-            data.append({"id": x.id, "name": x.name, "username": x.username, "admin": x.is_admin})
+            data.append({"Id": x.id, "Name": x.name, "Username": x.username, "Admin": x.is_admin})
         return JSONResponse({"msg": "success", "data": data})
     raise HTTPException(404, {"msg": "not found"})
 
 
-@route.get("/{id}")
+# endpoint for get user by id
+@route.get("/{id}", dependencies=[Depends(check_authrize)])
 def get_by_id(id: int, db: Session = Depends(get_db)):
     user = get_user_by_id(db, id)
     if user:
@@ -31,7 +42,8 @@ def get_by_id(id: int, db: Session = Depends(get_db)):
         )
 
 
-@route.post("/", response_model=CreateUser)
+# endpoint for create new user
+@route.post("/", response_model=CreateUser, dependencies=[Depends(check_authrize)])
 async def create_user_new(_user: CreateUser, db: Session = Depends(get_db), auth: AuthJWT = Depends()):
     try:
         user = await create_user(db, _user)
@@ -43,6 +55,7 @@ async def create_user_new(_user: CreateUser, db: Session = Depends(get_db), auth
         )
 
 
+# endpoint to get login
 @route.post("/login")
 async def login(req: Any = Body(...), auth: AuthJWT = Depends(), db: Session = Depends(get_db)):
     _user = get_user_by_username(db, req["username"])
@@ -54,15 +67,25 @@ async def login(req: Any = Body(...), auth: AuthJWT = Depends(), db: Session = D
     return JSONResponse({"msg": "Login Success", "token": token}, status_code=200)
 
 
-@route.delete("/{id}")
+# endpoint to delete user
+@route.delete("/delete/{id}", dependencies=[Depends(check_authrize)])
 def delete_(id: int, db: Session = Depends(get_db), auth: AuthJWT = Depends()):
     auth.jwt_required()
     delete_user(db, id)
     return JSONResponse({"msg": "Delete Success"}, status.HTTP_200_OK)
 
 
-@route.put("/{id}")
+# enpoint to update user
+@route.put("/{id}", dependencies=[Depends(check_authrize)])
 async def update_(id: int, _user: CreateUser, db: Session = Depends(get_db)):
     user = await update_user(db, _user, id)
     data: dict = {"name": user.name, "username": user.username}
     return JSONResponse({"msg": "Update Success", "data": data}, status.HTTP_200_OK)
+
+
+# endpoint to logout
+@route.delete("/logout", dependencies=[Depends(check_authrize)])
+def logout(auth: AuthJWT = Depends()):
+    jti = auth.get_raw_jwt()["jti"]
+    denylist.add(jti)
+    return JSONResponse(status_code=200, content={"msg": "logout success"})

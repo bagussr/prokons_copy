@@ -9,6 +9,12 @@ class Status(Enum):
     paid: str = "paid"
 
 
+class Category(Enum):
+    shirt: str = "Shirt"
+    pant: str = "Pant"
+    suit: str = "Suite"
+
+
 class UserSchemas(BaseModel):
     name: str
     username: str
@@ -51,6 +57,7 @@ class CreateProduct(ProductSchemas):
 class VariantSchemas(BaseModel):
     product_id: Optional[int]
     color_id: Optional[int]
+    category: Optional[Category]
     size: Optional[str]
     stock: Optional[int]
     price: Optional[int]

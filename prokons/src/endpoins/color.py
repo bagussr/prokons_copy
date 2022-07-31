@@ -2,22 +2,24 @@ from turtle import color
 from fastapi import APIRouter, Depends, HTTPException, status
 from src.__init__ import Session, get_db, JSONResponse
 from src.handler.color import get_all_color, add_new_color, delete_color
+from src.handler.utils import check_authrize
 from src.schemas.main import CreateColor
 
-route = APIRouter(prefix="/color", tags=["color"])
+route = APIRouter(prefix="/color", tags=["color"], dependencies=[Depends(check_authrize)])
 
-
+# endpoint to get all color
 @route.get("/")
 def all_color(db: Session = Depends(get_db)):
     colors = get_all_color(db)
     if colors:
         data: list = []
         for x in colors:
-            data.append({"id": x.id, "color": x.name})
+            data.append({"Id": x.id, "Color": x.name})
         return data
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
+# endpoint to add new color
 @route.post("/")
 async def add_Color(db: Session = Depends(get_db), color: CreateColor = None):
     _color = await add_new_color(db, color)
@@ -26,6 +28,7 @@ async def add_Color(db: Session = Depends(get_db), color: CreateColor = None):
     raise HTTPException(status.HTTP_400_BAD_REQUEST)
 
 
+# endpoint to delete color
 @route.delete("/{id}")
 def delete_color_(id: int, db: Session = Depends(get_db)):
     color = delete_color(db, id)

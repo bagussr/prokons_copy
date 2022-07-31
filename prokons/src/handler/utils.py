@@ -1,13 +1,15 @@
 from datetime import datetime
-from src.__init__ import salt, checkpw, hashpw, Session
+from src.__init__ import salt, checkpw, hashpw, Session, AuthJWT, JWTDecodeError
 from src.model.main import User, Variant, Product, Color
+from fastapi import Depends
 
-
+# function for create hash password
 def create_password(passowrd: str):
     hashed_password = hashpw(passowrd, salt)
     return hashed_password
 
 
+# function to create admin
 async def create_admin(db: Session):
     user = User(
         name="admin",
@@ -22,11 +24,13 @@ async def create_admin(db: Session):
     return user
 
 
+# function to check input password and hashed password
 def check_password(db: Session, username: str, password: str):
     _user = db.query(User).filter(User.username == username).first()
     return checkpw(password.encode("utf-8"), _user.password.encode("utf-8"))
 
 
+# function to get all product with variants
 async def product_variant(db: Session):
     product = db.query(Product).all()
     data: list = []
@@ -36,7 +40,23 @@ async def product_variant(db: Session):
         for y in variant:
             color = db.query(Color).filter(Color.id == y.color_id).first()
             variants.append(
-                {"variant_id": y.id, "color": color.name, "size": y.size, "price": y.price, "stock": y.stock}
+                {
+                    "Id": y.id,
+                    "Category": y.category,
+                    "Color": color.name,
+                    "Size": y.size,
+                    "Price": y.price,
+                    "Stock": y.stock,
+                }
             )
-        data.append({"id": x.id, "name": x.name, "image_path": x.image_path, "variant": variants})
+        data.append({"IId": x.id, "Name": x.name, "Image": x.image_path, "Variant": variants})
     return data
+
+
+# dependency to check authorize
+def check_authrize(auth: AuthJWT = Depends()):
+    try:
+        auth.jwt_required()
+        pass
+    except JWTDecodeError:
+        raise {"msg": "not authenticated"}
